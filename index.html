@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1039,9 +1040,9 @@ function rInv(filtro){
           <div style="font-size:10px;color:var(--gy);margin-top:1px">${VMAP[i.viaje]?VMAP[i.viaje].l:i.viaje} · $${precioIng[i.id]}/${i.u}${i.nota?' · '+i.nota:''}</div>
         </div>
         <div style="display:flex;align-items:center;gap:5px">
-          <button class="qb" onclick="adjS('${i.id}',-1)">−</button>
-          <div style="font-family:'Playfair Display',serif;font-size:15px;font-weight:700;min-width:32px;text-align:center;padding:2px 5px;border-radius:6px;${isAg?'background:var(--rdl);color:var(--rd)':isBa?'background:var(--orl);color:var(--or)':'background:var(--grl);color:var(--gr)'}">${s}</div>
-          <button class="qb" onclick="adjS('${i.id}',1)">+</button>
+          <button class="qb" onclick="adjS('${i.id}',-0.1)" style="font-size:11px">−</button>
+          <div onclick="editStockDirecto('${i.id}','${i.u}')" title="Toca para escribir el valor exacto" style="font-family:'Playfair Display',serif;font-size:14px;font-weight:700;min-width:36px;text-align:center;padding:2px 5px;border-radius:6px;cursor:pointer;${isAg?'background:var(--rdl);color:var(--rd)':isBa?'background:var(--orl);color:var(--or)':'background:var(--grl);color:var(--gr)'}">${s}</div>
+          <button class="qb" onclick="adjS('${i.id}',0.1)" style="font-size:11px">+</button>
           <div style="font-size:11px;color:var(--gy)">${i.u}</div>
         </div>
       </div>`;
@@ -1049,7 +1050,18 @@ function rInv(filtro){
   });
   document.getElementById('inv-list').innerHTML=`<div style="border-radius:11px;overflow:hidden;border:1px solid var(--bd)">${h}</div>`;
 }
-function adjS(id,d){stock[id]=Math.max(0,(stock[id]||0)+d);rInv();autoSave();}
+function adjS(id,d){stock[id]=Math.round(Math.max(0,(stock[id]||0)+d)*100)/100;rInv();autoSave();}
+function editStockDirecto(id,u){
+  const ing=INGS.find(x=>x.id===id);
+  const actual=stock[id]||0;
+  const n=prompt((ing?ing.n:'Ingrediente')+' — stock actual: '+actual+' '+u+'\nEscribe el nuevo valor:', actual);
+  if(n===null)return;
+  const v=parseFloat(n);
+  if(isNaN(v)||v<0){alert('Valor inválido');return;}
+  stock[id]=Math.round(v*100)/100;
+  rInv();autoSave();
+  showToast('✅ Stock actualizado: '+v+' '+u);
+}
 
 // ═══════════════════════════════════════════════════════
 //  POSTRES
