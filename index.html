@@ -1301,24 +1301,45 @@ function desconectarFirebase(){
 }
 
 function guardarNube(){
-  if(!FB_URL){fbMsg('No hay conexión configurada.','var(--or)');return;}
+  if(!FB_URL){fbMsg('No hay URL de Firebase.','var(--or)');actualizarCloudStatus('desconectado');return;}
   actualizarCloudStatus('guardando');
-  fetch(fbEndpoint('yolet'),{
+  // Serialize safely
+  var datos;
+  try { datos=JSON.stringify(serializarEstado()); }
+  catch(e){ actualizarCloudStatus('error');fbMsg('❌ Error al preparar datos: '+e.message,'var(--rd)');return; }
+  // Save with timeout
+  var guardadoOk=false;
+  var timerGuardar=setTimeout(function(){
+    if(!guardadoOk){ actualizarCloudStatus('error');fbMsg('❌ Sin respuesta de Firebase (10s). Revisa tu internet o las reglas del proyecto.','var(--rd)'); }
+  },10000);
+  fetch(FB_URL.replace(/\/$/,'')+'/yolet.json',{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(serializarEstado())
+    body:datos
   })
-  .then(r=>{if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
-  .then(()=>{
+  .then(function(r){
+    if(!r.ok) return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t.slice(0,80));});
+    return r.json();
+  })
+  .then(function(){
+    guardadoOk=true;
+    clearTimeout(timerGuardar);
     actualizarCloudStatus('guardado');
-    setTimeout(()=>actualizarCloudStatus('conectado'),2000);
+    setTimeout(function(){actualizarCloudStatus('conectado');},2000);
     showToast('☁️ Guardado en la nube');
   })
-  .catch(e=>{
-    clearTimeout(timeout2);
-    const msg=e.name==='AbortError'?'Tiempo agotado — revisa tu internet':e.message;
+  .catch(function(e){
+    guardadoOk=true;
+    clearTimeout(timerGuardar);
     actualizarCloudStatus('error');
+    var msg=e.message||'Error desconocido';
+    if(msg.includes('401')||msg.includes('403')||msg.includes('Permission denied')){
+      msg='Acceso denegado — en Firebase ve a Realtime Database → Reglas y pon: { "rules": { ".read": true, ".write": true } }';
+    } else if(msg.includes('Failed to fetch')||msg.includes('NetworkError')){
+      msg='Sin internet o Firebase bloqueado';
+    }
     fbMsg('❌ '+msg,'var(--rd)');
+    showToast('❌ No se guardó en nube');
   });
 }
 
