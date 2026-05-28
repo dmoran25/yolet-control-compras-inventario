@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -616,7 +615,7 @@ let PLATOS = [
 let mins={};  PLATOS.forEach(p=>mins[p.n]=p.min);
 let stock={}; INGS.forEach(i=>stock[i.id]=i.s);
 let precioIng={}; INGS.forEach(i=>precioIng[i.id]=i.pr);
-let compras=[], gastos=[], lotes=[];
+let compras=[], gastos=[], lotes=[], historialCierres=[];
 let viajeM='', quienG='', minFiltro='', catFiltro='', invFiltro='';
 let nId=100, gastosId=500, lotesId=200;
 
@@ -1248,10 +1247,17 @@ function fbMsg(msg,color){
 
 function serializarEstado(){
   return {
-    _v:2, _t:new Date().toISOString(),
-    stock, precioIng, mins, compras, gastos, lotes, historialCierres,
-    ingsCustom:INGS.filter(i=>i.id.startsWith('u')),
-    platosRecetas:PLATOS.map(p=>({n:p.n,ings:p.ings,min:mins[p.n]||p.min})),
+    _v:2,
+    _t:new Date().toISOString(),
+    stock:stock,
+    precioIng:precioIng,
+    mins:mins,
+    compras:compras,
+    gastos:gastos,
+    lotes:lotes,
+    historialCierres:historialCierres||[],
+    ingsCustom:INGS.filter(function(i){return i.id.startsWith('u');}),
+    platosRecetas:PLATOS.map(function(p){return {n:p.n,min:mins[p.n]||p.min||0};}),
   };
 }
 
