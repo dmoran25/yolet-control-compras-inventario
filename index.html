@@ -133,10 +133,11 @@ select:focus,input:focus{border-color:var(--rd)}
     <div class="hdr-t">Antojitos Yolet</div>
     <div class="hdr-s">Compras · Recetas · Inventario</div>
   </div>
-  <div id="cloud-status" onclick="pn('p-firebase')" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.15);padding:6px 12px;border-radius:20px;cursor:pointer;flex-shrink:0">
+  <button onclick="guardarNube()" id="btn-guardar" style="display:flex;align-items:center;gap:5px;background:rgba(255,255,255,.15);border:none;padding:6px 12px;border-radius:20px;cursor:pointer;flex-shrink:0;font-family:'DM Sans',sans-serif">
     <span id="cloud-icon">☁️</span>
-    <span id="cloud-txt" style="font-size:11px;color:#fff;font-weight:600">Sin nube</span>
-  </div>
+    <span id="cloud-txt" style="font-size:11px;color:#fff;font-weight:600">Guardar</span>
+  </button>
+  <div onclick="pn('p-firebase')" style="padding:6px 8px;cursor:pointer;color:rgba(255,255,255,.6);font-size:13px" title="Configurar Firebase">⚙️</div>
 </div>
 
 <div class="panel" id="p-firebase" style="margin:0;border-radius:0;border-left:none;border-right:none;border-top:none">
@@ -1051,7 +1052,7 @@ function rInv(filtro){
   });
   document.getElementById('inv-list').innerHTML=`<div style="border-radius:11px;overflow:hidden;border:1px solid var(--bd)">${h}</div>`;
 }
-function adjS(id,d){stock[id]=Math.round(Math.max(0,(stock[id]||0)+d)*100)/100;rInv();autoSave();}
+function adjS(id,d){stock[id]=Math.round(Math.max(0,(stock[id]||0)+d)*100)/100;rInv();}
 function editStockDirecto(id,u){
   const ing=INGS.find(x=>x.id===id);
   const actual=stock[id]||0;
@@ -1060,7 +1061,7 @@ function editStockDirecto(id,u){
   const v=parseFloat(n);
   if(isNaN(v)||v<0){alert('Valor inválido');return;}
   stock[id]=Math.round(v*100)/100;
-  rInv();autoSave();
+  rInv();
   showToast('✅ Stock actualizado: '+v+' '+u);
 }
 
@@ -1373,11 +1374,7 @@ function cargarNube(){
   });
 }
 
-function autoSave(){
-  if(!FB_URL)return;
-  clearTimeout(autoSaveTimer);
-  autoSaveTimer=setTimeout(()=>guardarNube(),3000);
-}
+function autoSave(){}
 
 function exportarJSON(){
   const data=serializarEstado();
@@ -1443,7 +1440,7 @@ function iniciarNube(){
     document.getElementById('fb-url').value=FB_URL;
     actualizarCloudStatus('cargando');
     cargarNube();
-    setInterval(()=>{if(FB_URL)guardarNube();},30000);
+    // auto-save desactivado
   }
 }
 
