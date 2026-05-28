@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -1285,7 +1286,7 @@ function conectarFirebase(){
   localStorage.setItem('yolet_fb_url',FB_URL);
   actualizarCloudStatus('cargando');
   fbMsg('Conectando...','var(--gy)');
-  fetch(fbEndpoint('test'))
+  fetch(FB_URL.replace(/\/$/,'')+'/yolet/test.json')
     .then(r=>r.json())
     .then(()=>{
       actualizarCloudStatus('conectado');
@@ -1319,10 +1320,11 @@ function guardarNube(){
   var timerGuardar=setTimeout(function(){
     if(!guardadoOk){ actualizarCloudStatus('error');fbMsg('❌ Sin respuesta de Firebase (10s). Revisa tu internet o las reglas del proyecto.','var(--rd)'); }
   },10000);
-  fetch(FB_URL.replace(/\/$/,'')+'/yolet.json',{
+  // Store as a single string value to avoid Firebase key restrictions
+  fetch(FB_URL.replace(/\/$/,'')+'/yolet/estado.json',{
     method:'PUT',
     headers:{'Content-Type':'application/json'},
-    body:datos
+    body:JSON.stringify(datos)
   })
   .then(function(r){
     if(!r.ok) return r.text().then(function(t){throw new Error('HTTP '+r.status+': '+t.slice(0,80));});
@@ -1355,8 +1357,9 @@ function cargarNube(){
   actualizarCloudStatus('cargando');
   const controller2=new AbortController();
   const timeout2=setTimeout(()=>controller2.abort(),10000);
-  fetch(fbEndpoint('yolet'),{signal:controller2.signal})
-  .then(r=>{clearTimeout(timeout2);if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  fetch(FB_URL.replace(/\/$/,'')+'/yolet/estado.json')
+  .then(function(r){if(!r.ok)throw new Error('HTTP '+r.status);return r.json();})
+  .then(function(strData){return strData?JSON.parse(strData):null;})
   .then(data=>{
     if(!data){fbMsg('No hay datos guardados aún.','var(--gy)');actualizarCloudStatus('conectado');return;}
     const ok=aplicarEstado(data);
@@ -1419,7 +1422,7 @@ function importarJSON(input){
 function probarConexion(){
   if(!FB_URL){fbMsg('No hay URL configurada.','var(--or)');return;}
   fbMsg('Probando...','var(--gy)');
-  fetch(fbEndpoint('test'))
+  fetch(FB_URL.replace(/\/$/,'')+'/yolet/test.json')
     .then(r=>{
       if(!r.ok)throw new Error('HTTP '+r.status);
       return r.json();
